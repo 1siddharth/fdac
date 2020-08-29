@@ -1,15 +1,15 @@
 ## fdac - File Descriptors as Capabilities
 
-This is an project exhibiting use of file descriptors on Linux as
+This is a project exhibiting use of file descriptors on Linux as
 [capabilities](https://en.wikipedia.org/wiki/Capability-based_security), modelling concepts such as
 transitivity, revocation, and equivalence using existing facilities in Linux. It is a set of
 lightweight primitives built on top of the existing inheritance model of file descriptors and
-features available. This is can be used to model capability tokens in userspace with some
-user-defined access rights attached to them (strictly local to the server exposing the capability in
-question), and to enforce the principle of least privilege in context of security models exposed by
-userspace applications. We believe this scheme is flexible enough to be extended to more complex use
-cases, provides a race-free alternative to some of the current practices, but the code is currently
-only a proof of concept, and not ready for general use.
+features available. This can be used to model capability tokens in userspace with some user-defined
+access rights attached to them (strictly local to the server exposing the capability in question),
+and to enforce the principle of least privilege in context of security models exposed by userspace
+applications. We believe this scheme is flexible enough to be extended to more complex use cases,
+provides a race-free alternative to some of the current practices, but the code is currently only a
+proof of concept, and not ready for general use.
 
 Our approach doesn't introduce any kernel level support, nor any concept of a capability mode
 restricting the process to a capability based sandbox (unlike prior art like Capsicum), but merely
