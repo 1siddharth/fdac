@@ -17,11 +17,6 @@
 
 namespace fdcap {
 
-class FDCap;
-
-template <typename T>
-concept OnlyFDCap = requires { std::is_same_v<std::remove_cvref_t<T>, FDCap> == true; };
-
 class FDCap {
 private:
   int fd = -1;
@@ -62,7 +57,8 @@ private:
     f.fd = -1;
   }
 public:
-  template <OnlyFDCap... List>
+  template <typename... List,
+	    typename = std::enable_if_t<std::conjunction_v<std::is_same<std::remove_cvref_t<List>, FDCap>...>>>
   static void lazy_init(const FDCap& f, const List&... list)
   {
     if (f.dev == static_cast<dev_t>(-1))
