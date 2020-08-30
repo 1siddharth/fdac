@@ -10,26 +10,53 @@ TEST(FDCap, Invariants1)
   int r = pipe(fd);
   if (r < 0)
     throw std::runtime_error("Failed to create pipes");
-  FDCap A(fd[0]);
-  FDCap B(1);
-  FDCap C(2);
+  FDCap A(dup3(0, 5, 0));
+  FDCap B(fd[0]);
+  int rr = fcntl(B.get(), F_DUPFD_CLOEXEC, 3);
+  if (rr < 0)
+    throw std::runtime_error("FCNTL ERROR");
+  FDCap C(fd[1]);
   ASSERT_FALSE(FDCap::is_same_file(A, B));
   ASSERT_FALSE(A == B);
-  ASSERT_TRUE(FDCap::is_same_file(B, C));
-  ASSERT_TRUE(B == C);
+  ASSERT_FALSE(FDCap::is_same_file(B, C));
+  ASSERT_FALSE(B == C);
   ASSERT_FALSE(FDCap::is_same_file(C, A));
   ASSERT_FALSE(C == A);
   ASSERT_FALSE(FDCap::is_same_file_object(A, B));
   ASSERT_TRUE(FDCap::is_same_file_object(B, C));
   ASSERT_FALSE(FDCap::is_same_file_object(C, A));
-  ASSERT_EQ(A.get(), fd[0]);
-  ASSERT_EQ(B.get(), 1);
-  ASSERT_EQ(C.get(), 2);
+  ASSERT_EQ(A.get(), 5);
+  ASSERT_EQ(B.get(), fd[0]);
+  ASSERT_EQ(C.get(), fd[1]);
   ASSERT_THROW(FDCap(-1), std::runtime_error);
 }
 
-int main()
+TEST(FDCap, Copy1)
 {
-  testing::InitGoogleTest();
+  FDCap A(dup3(0, 3, 0));
+  FDCap B = A;
+  ASSERT_EQ(B.get(), 4);
+  ASSERT_EQ(A.get(), 3);
+  ASSERT_TRUE(FDCap::is_same_file(A, B));
+  ASSERT_TRUE(FDCap::is_same_file_object(A, B));
+}
+
+TEST(FDCap, Move1)
+{
+  FDCap A(dup3(0, 3, 0));
+  FDCap B(std::move(A));
+  ASSERT_EQ(A.get(), -1);
+  ASSERT_EQ(B.get(), 3);
+  ASSERT_FALSE(FDCap::is_same_file(A, B));
+  ASSERT_EQ((A = B).get(), 4);
+  ASSERT_EQ(B.get(), 3);
+  A.reset(1);
+  ASSERT_EQ(A.get(), 1);
+  ASSERT_TRUE(FDCap::is_same_file_object(A, B));
+}
+
+int main(int argc, char **argv)
+{
+  testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

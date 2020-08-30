@@ -17,32 +17,35 @@
 
 namespace fdcap {
 
+constexpr inline dev_t FDCAP_DEV_MAX = static_cast<dev_t>(-1);
+constexpr inline ino_t FDCAP_INO_MAX = static_cast<ino_t>(-1);
+
 class FDCap {
 private:
   int fd = -1;
-  mutable dev_t dev = static_cast<ino_t>(-1);
-  mutable ino_t ino = static_cast<ino_t>(-1);
+  mutable dev_t dev = FDCAP_DEV_MAX;
+  mutable ino_t ino = FDCAP_INO_MAX;
 
   static void lazy_init(const FDCap& f)
   {
-    if (f.dev == static_cast<dev_t>(-1))
+    if (f.dev == FDCAP_DEV_MAX)
       lazy_init_dev_ino(f);
   }
   static void lazy_init_dev_ino(const FDCap& f)
   {
-    assert(f.ino == static_cast<ino_t>(-1));
+    assert(f.ino == FDCAP_INO_MAX);
+    assert(f.fd > -1);
     struct stat st;
     int r = fstat(f.fd, &st);
-    if (r < 0) {
-      throw std::runtime_error("Failed to fstat fd");
-    }
+    if (r < 0)
+      throw std::runtime_error("Failed to fstat file descriptor");
     f.dev = st.st_dev;
     f.ino = st.st_ino;
   }
   void move_from(const FDCap& f)
   {
     close(fd);
-    fd = fcntl(fd, F_DUPFD_CLOEXEC);
+    fd = fcntl(f.fd, F_DUPFD_CLOEXEC, 3);
     if (fd < 0)
       throw std::runtime_error("Failed to duplicate descriptor");
     dev = f.dev;
@@ -55,19 +58,23 @@ private:
     dev = f.dev;
     ino = f.ino;
     f.fd = -1;
+    f.dev = FDCAP_DEV_MAX;
+    f.ino = FDCAP_INO_MAX;
   }
 public:
   template <typename... List,
 	    typename = std::enable_if_t<std::conjunction_v<std::is_same<std::remove_cvref_t<List>, FDCap>...>>>
   static void lazy_init(const FDCap& f, const List&... list)
   {
-    if (f.dev == static_cast<dev_t>(-1))
+    if (f.dev == FDCAP_DEV_MAX)
       lazy_init(f);
     if (sizeof...(list) > 0)
       lazy_init(list...);
   }
   static bool is_same_file(const FDCap& a, const FDCap& b)
   {
+    if (a.fd < 0 || b.fd < 0)
+      return false;
     pid_t pid = getpid();
     return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.get(), b.get());
   }
@@ -88,7 +95,7 @@ public:
   {
     move_from(f);
   }
-  FDCap& operator=(const FDCap& f)
+  FDCap& operator=(FDCap& f)
   {
     move_from(f);
     return *this;
@@ -113,6 +120,13 @@ public:
   int get() const
   {
     return fd;
+  }
+  void reset(int fd_)
+  {
+    close(fd);
+    fd = fd_;
+    dev = FDCAP_DEV_MAX;
+    ino = FDCAP_INO_MAX;
   }
 };
 
