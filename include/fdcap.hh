@@ -25,8 +25,8 @@ concept OnlyFDCap = requires { std::is_same_v<std::remove_cvref_t<T>, FDCap> == 
 class FDCap {
 private:
   int fd = -1;
-  mutable dev_t dev = -1;
-  mutable ino_t ino = -1;
+  mutable dev_t dev = static_cast<ino_t>(-1);
+  mutable ino_t ino = static_cast<ino_t>(-1);
 
   template <OnlyFDCap... List>
   static void lazy_init(const FDCap& f, const List&... list)
@@ -73,10 +73,7 @@ public:
   static bool is_same_file(const FDCap& a, const FDCap& b)
   {
     pid_t pid = getpid();
-    int r = syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.get(), b.get());
-    if (__builtin_expect(r < 0, 0))
-      return false;
-    return !!r;
+    return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.get(), b.get());
   }
   static bool is_same_file_object(const FDCap& a, const FDCap& b)
   {
@@ -86,7 +83,11 @@ public:
     return false;
   }
 
-  explicit FDCap(int fd_) : fd(fd_) {}
+  explicit FDCap(int fd_) : fd(fd_)
+  {
+    if (fd < 0)
+      throw std::runtime_error("Bad File Descriptor");
+  }
   FDCap(const FDCap& f)
   {
     move_from(f);
