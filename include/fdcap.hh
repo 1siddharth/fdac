@@ -28,14 +28,6 @@ private:
   mutable dev_t dev = static_cast<ino_t>(-1);
   mutable ino_t ino = static_cast<ino_t>(-1);
 
-  template <OnlyFDCap... List>
-  static void lazy_init(const FDCap& f, const List&... list)
-  {
-    if (f.dev == static_cast<dev_t>(-1))
-      lazy_init(f);
-    if (sizeof...(list) > 0)
-      lazy_init(list...);
-  }
   static void lazy_init(const FDCap& f)
   {
     if (f.dev == static_cast<dev_t>(-1))
@@ -70,6 +62,14 @@ private:
     f.fd = -1;
   }
 public:
+  template <OnlyFDCap... List>
+  static void lazy_init(const FDCap& f, const List&... list)
+  {
+    if (f.dev == static_cast<dev_t>(-1))
+      lazy_init(f);
+    if (sizeof...(list) > 0)
+      lazy_init(list...);
+  }
   static bool is_same_file(const FDCap& a, const FDCap& b)
   {
     pid_t pid = getpid();

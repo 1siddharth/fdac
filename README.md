@@ -13,14 +13,14 @@ proof of concept, and not ready for general use.
 
 Our approach doesn't introduce any kernel level support, nor any concept of a capability mode
 restricting the process to a capability based sandbox (unlike prior art like Capsicum), but merely
-showcases how userspace can use file descriptors and other kernel primitives to build such a
-security model in userspace. Hence, it coexists with the conventional ambient authority system in
-Linux, and can also coexist with capability models like Capsicum if ever added to Linux in the
-future. It would possible to emulate a capability mode using seccomp, however. [Include later]
+showcases how one can use file descriptors and other kernel primitives to build such a security
+model in userspace. Hence, it coexists with the conventional ambient authority system in Linux, and
+can also coexist with capability models like Capsicum if ever added to Linux in the future. It would
+possible to emulate a capability mode using seccomp, however. [Include later]
 
 This also allows userspace to build APIs (e.g. over D-Bus, JSON over Unix Domain sockets, etc.)
 around the notion of a concrete handle type already supported by the kernel system call APIs, a
-pattern which is gaining more and more prevalance in the recent years. [Add ref to the new mount
+pattern which is gaining more and more prevalence in the recent years. [Add ref to the new mount
 API, pidfd, etc.]
 
 (Contrast with capsicum and composability if such a model is added to the kernel in the future).
