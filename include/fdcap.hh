@@ -44,7 +44,8 @@ private:
   }
   void move_from(const FDCap& f)
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = fcntl(f.fd, F_DUPFD_CLOEXEC, 3);
     if (fd < 0)
       throw std::runtime_error("Failed to duplicate descriptor");
@@ -53,7 +54,8 @@ private:
   }
   void move_from(FDCap&& f)
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = f.fd;
     dev = f.dev;
     ino = f.ino;
@@ -113,7 +115,8 @@ public:
   }
   ~FDCap()
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
   }
   bool operator==(const FDCap& f) const
   {
@@ -125,7 +128,8 @@ public:
   }
   void reset(int fd_)
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = fd_;
     dev = FDCAP_DEV_MAX;
     ino = FDCAP_INO_MAX;
