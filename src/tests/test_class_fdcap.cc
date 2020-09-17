@@ -50,9 +50,28 @@ TEST(FDCap, Move1)
   ASSERT_FALSE(FDCap::is_same_file(A, B));
   ASSERT_EQ((A = B).get(), 4);
   ASSERT_EQ(B.get(), 3);
-  A.reset(1);
-  ASSERT_EQ(A.get(), 1);
+  ASSERT_EQ(A.get(), 4);
   ASSERT_TRUE(FDCap::is_same_file_object(A, B));
+}
+
+TEST(FDCap, SelfCopy1)
+{
+  FDCap A(dup3(0, 3, 0));
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wself-assign-overloaded"
+  A = A;
+  #pragma GCC diagnostic pop
+  ASSERT_EQ(A.get(), 3);
+}
+
+TEST(FDCap, SelfMove1)
+{
+  FDCap A(dup3(0, 3, 0));
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wself-move"
+  A = std::move(A);
+  #pragma GCC diagnostic pop
+  ASSERT_EQ(A.get(), -1);
 }
 
 int main(int argc, char **argv)

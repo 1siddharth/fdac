@@ -93,11 +93,13 @@ public:
   }
   FDCap(const FDCap& f)
   {
-    move_from(f);
+    if (this != &f)
+      move_from(f);
   }
-  FDCap& operator=(FDCap& f)
+  FDCap& operator=(const FDCap& f)
   {
-    move_from(f);
+    if (this != &f)
+      move_from(f);
     return *this;
   }
   FDCap(FDCap&& f)
