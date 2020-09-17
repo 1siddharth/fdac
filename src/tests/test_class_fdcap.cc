@@ -1,4 +1,6 @@
 #include <iostream>
+#include <type_traits>
+
 #include <gtest/gtest.h>
 #include <fdcap.hh>
 
@@ -29,6 +31,17 @@ TEST(FDCap, Invariants1)
   ASSERT_EQ(B.get(), fd[0]);
   ASSERT_EQ(C.get(), fd[1]);
   ASSERT_THROW(FDCap(-1), std::runtime_error);
+}
+
+TEST(FDCap, Invariants2)
+{
+  ASSERT_FALSE((std::is_nothrow_constructible_v<FDCap, int>));
+  ASSERT_TRUE(std::is_nothrow_copy_constructible_v<FDCap>);
+  ASSERT_TRUE(std::is_nothrow_copy_assignable_v<FDCap>);
+  ASSERT_TRUE(std::is_nothrow_move_constructible_v<FDCap>);
+  ASSERT_TRUE(std::is_nothrow_move_assignable_v<FDCap>);
+  ASSERT_TRUE(std::is_nothrow_swappable_v<FDCap>);
+  ASSERT_TRUE(std::is_nothrow_destructible_v<FDCap>);
 }
 
 TEST(FDCap, Copy1)
