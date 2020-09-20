@@ -69,14 +69,14 @@ public:
     if (sizeof...(list) > 0)
       lazy_init(list...);
   }
-  static bool is_same_file(const FDCap& a, const FDCap& b) noexcept
+  [[nodiscard]] static bool is_same_file(const FDCap& a, const FDCap& b) noexcept
   {
     if (a.fd < 0 || b.fd < 0)
       return false;
     pid_t pid = getpid();
-    return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.get(), b.get());
+    return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.fd, b.fd);
   }
-  static bool is_same_file_object(const FDCap& a, const FDCap& b) noexcept
+  [[nodiscard]] static bool is_same_file_object(const FDCap& a, const FDCap& b) noexcept
   {
     lazy_init(a, b);
     if ((a.dev == b.dev) && (a.ino == b.ino))
@@ -118,7 +118,7 @@ public:
   {
     return is_same_file(*this, f);
   }
-  int get() const noexcept
+  [[nodiscard]] int get() const noexcept
   {
     return fd;
   }
