@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -41,7 +42,7 @@ struct std::hash<S>
 
 #define println(s) printf(s "\n")
 
-#define SETUP()  FDCache<S> fdc; S s; print_stats(s); int fd = 3
+#define SETUP()  FDCache<S> fdc; S s; int fd = 3
 
 
 using fdcap::FDCap;
@@ -68,12 +69,44 @@ TEST(FDCache, ReplaceInvariants1)
 {
   SETUP();
 
-  println("Insert");
   bool b = fdc.insert(s, FDCap(dup3(0, fd++, 0)));
   EXPECT_TRUE(b);
 
   FDCap cap(dup3(0, fd++, 0));
   b = fdc.replace(s, FDCap(dup3(0, fd++, 0)));
+  ASSERT_TRUE(b);
+  auto p = fdc.get(s);
+  ASSERT_EQ(p->get(), fd - 1);
+
+  ASSERT_FALSE(fdc.replace(S{}, FDCap(dup3(0, fd++, 0))));
+}
+
+TEST(FDCache, RevokeInvariants1)
+{
+  SETUP();
+
+  bool b = fdc.insert(s, FDCap(dup3(0, fd++, 0)));
+  EXPECT_TRUE(b);
+
+  fdc.revoke(s);
+  ASSERT_EQ(fdc.get(s), nullptr);
+}
+
+TEST(FDCache, HetKeyInvariants1)
+{
+  FDCache<std::string_view> fdc;
+  int fd = 3;
+
+  EXPECT_TRUE(fdc.insert(std::string_view("foobar"), FDCap(dup3(0, fd++, 0))));
+  EXPECT_TRUE(fdc.insert(std::string_view("barfoo"), FDCap(dup3(0, fd++, 0))));
+  EXPECT_TRUE(fdc.insert(std::string_view("foobaz"), FDCap(dup3(0, fd++, 0))));
+
+  bool b = fdc.replace(std::string("foobar"), FDCap(dup3(0, fd++, 0)));
+  ASSERT_TRUE(b);
+  b = fdc.replace("barfoo", FDCap(dup3(0, fd++, 0)));
+  ASSERT_TRUE(b);
+  std::string tmp = "foobaz";
+  b = fdc.replace(tmp, FDCap(dup3(0, fd++, 0)));
   ASSERT_TRUE(b);
 }
 

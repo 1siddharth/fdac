@@ -1,8 +1,8 @@
 #pragma once
 
-#include <unordered_map>
-#include <type_traits>
 #include <stdexcept>
+#include <type_traits>
+#include <unordered_map>
 
 #include <fdcap.hh>
 
@@ -15,12 +15,6 @@ class FDCache {
 
   std::unordered_map<T, fdcap::FDCap> assoc_map;
 
-  [[nodiscard]] int get_new_fd()
-  {
-    int fd = -1;
-    return fd;
-  }
-
   template <class U>
   using het_key_t = std::enable_if_t<std::is_convertible_v<U, T>>;
 public:
@@ -30,6 +24,12 @@ public:
   FDCache(FDCache&&) = delete;
   FDCache& operator=(FDCache&&) = delete;
   ~FDCache() = default;
+
+  [[nodiscard]] static int get_new_fd()
+  {
+    int fd = -1;
+    return fd;
+  }
 
   // Returns false if key doesn't exist
   template <class U, typename = het_key_t<U>>
@@ -54,6 +54,16 @@ public:
       return true;
     } catch (std::out_of_range&) {
       return false;
+    }
+  }
+  template <class U, typename = het_key_t<U>>
+  [[nodiscard]] fdcap::FDCap* get(U&& t)
+  {
+    try {
+      auto& cur_fdc = assoc_map.at(std::forward<U>(t));
+      return &cur_fdc;
+    } catch (std::out_of_range&) {
+      return nullptr;
     }
   }
 };
