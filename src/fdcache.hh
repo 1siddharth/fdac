@@ -46,24 +46,20 @@ public:
   }
   // Returns false if key doesn't exist
   template <class U, typename = het_key_t<U>>
-  [[nodiscard]] bool replace(U&& t, fdcap::FDCap&& fdc)
-  {
-    try {
-      auto& cur_fdc = assoc_map.at(std::forward<U>(t));
-      cur_fdc = std::move(fdc);
+  [[nodiscard]] bool replace(U&& t, fdcap::FDCap&& fdc) {
+    if (auto it = assoc_map.find(std::forward<U>(t)); it != assoc_map.end()) {
+      *it = std::move(fdc);
       return true;
-    } catch (std::out_of_range&) {
+    } else {
       return false;
     }
-  }
-  template <class U, typename = het_key_t<U>>
-  [[nodiscard]] fdcap::FDCap* get(U&& t)
-  {
-    try {
-      auto& cur_fdc = assoc_map.at(std::forward<U>(t));
-      return &cur_fdc;
-    } catch (std::out_of_range&) {
-      return nullptr;
-    }
-  }
+ }
+ template <class U, typename = het_key_t<U>>
+ [[nodiscard]] fdcap::FDCap* get(U&& t) {
+   if (auto it = assoc_map.find(std::forward<U>(t)); it != assoc_map.end()) {
+     return &(*it);
+   } else {
+     return nullptr;
+   }
+ }
 };
