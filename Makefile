@@ -1,6 +1,6 @@
 CXX = clang++ -std=c++20 -D_GNU_SOURCE -O3
 
-INCLUDE_ALL = -Iinclude
+INCLUDE_ALL = -Isrc
 CFLAGS = -Wall -Wextra -fstrict-aliasing -Wstrict-aliasing=2 $(INCLUDE_ALL) \
 	 -Wconversion -Wsign-conversion -Wpedantic
 CFLAGS_DEBUG = -ggdb -fsanitize=address,undefined
@@ -25,9 +25,13 @@ setup:
 
 tests: setup
 	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_class_fdcap src/tests/test_class_fdcap.cc
+	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_class_fdcache src/tests/test_class_fdcache.cc
+	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_inheritance src/tests/test_inheritance.cc
 
 all_tests_run: setup tests
 	./$(TESTSDIR)/test_class_fdcap
+	./$(TESTSDIR)/test_class_fdcache
+	./$(TESTSDIR)/test_inheritance
 
 clean:
 	rm -rf build/

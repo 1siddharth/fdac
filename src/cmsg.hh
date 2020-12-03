@@ -77,6 +77,7 @@ inline ssize_t FdRead(int sockfd, void *buf, size_t bufsize, int *fd) {
 
       *fd = *(reinterpret_cast<int *>(CMSG_DATA(cmsg)));
       std::cerr << "Received fd " << *fd << '\n';
+      return r;
     } else
       *fd = -1;
   } else {
