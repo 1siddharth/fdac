@@ -6,6 +6,9 @@
 #include <fdcache.hh>
 #include <fdcap.hh>
 
+// This shows how fds passed down during fork from the parent to the child will
+// compare equal, as they will internally point to the same open file.
+
 TEST(Inheritance, Basic1) {
   int fd[2];
   EXPECT_TRUE(!socketpair(AF_UNIX, SOCK_STREAM, 0, fd));

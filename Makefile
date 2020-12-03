@@ -27,11 +27,13 @@ tests: setup
 	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_class_fdcap src/tests/test_class_fdcap.cc
 	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_class_fdcache src/tests/test_class_fdcache.cc
 	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_inheritance src/tests/test_inheritance.cc
+	$(BIN_CXX) $(CFLAGS_DEBUG) $(TEST_LIB) -o $(TESTSDIR)/test_revocation src/tests/test_revocation.cc
 
 all_tests_run: setup tests
 	./$(TESTSDIR)/test_class_fdcap
 	./$(TESTSDIR)/test_class_fdcache
 	./$(TESTSDIR)/test_inheritance
+	./$(TESTSDIR)/test_revocation
 
 clean:
 	rm -rf build/
