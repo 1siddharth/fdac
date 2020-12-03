@@ -1,10 +1,11 @@
+#include <gtest/gtest.h>
+
+#include <fdcache.hh>
+#include <fdcap.hh>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <type_traits>
-
-#include <gtest/gtest.h>
-#include <fdcache.hh>
 
 struct S {
   int i = rand();
@@ -14,43 +15,61 @@ struct S {
   size_t move_construct = 0;
   size_t move_assign = 0;
   S() = default;
-  S(int i_) { i = i_; printf("Constructed from int\n"); }
-  S(S& other) { i = other.i; copy_construct++; other.copy_construct++; }
-  S& operator=(S& other) { i = other.i; copy_assign++; other.copy_assign++; return *this; }
-  S(S&& other) { i = other.i; move_construct++; other.move_construct++; }
-  S& operator=(S&& other) { i = other.i; move_assign++; other.move_assign++; return *this; }
-  ~S() = default;
-  bool operator==(const S& s) const
-  {
-    return i == s.i;
+  S(int i_) {
+    i = i_;
+    printf("Constructed from int\n");
   }
+  S(S& other) {
+    i = other.i;
+    copy_construct++;
+    other.copy_construct++;
+  }
+  S& operator=(S& other) {
+    i = other.i;
+    copy_assign++;
+    other.copy_assign++;
+    return *this;
+  }
+  S(S&& other) {
+    i = other.i;
+    move_construct++;
+    other.move_construct++;
+  }
+  S& operator=(S&& other) {
+    i = other.i;
+    move_assign++;
+    other.move_assign++;
+    return *this;
+  }
+  ~S() = default;
+  bool operator==(const S& s) const { return i == s.i; }
 };
 
 template <>
-struct std::hash<S>
-{
-  size_t operator()(const S& s) const noexcept
-  {
+struct std::hash<S> {
+  size_t operator()(const S& s) const noexcept {
     return std::hash<decltype(s.i)>()(s.i);
   }
 };
 
-#define print_stats(s)							\
-  printf("Current:\ncopy_construct %zu\ncopy_assign %zu\n"		\
-         "move_construct %zu\nmove_assign %zu\n",			\
-         s.copy_construct, s.copy_assign, s.move_construct, s.move_assign);
+#define print_stats(s)                                  \
+  printf(                                               \
+      "Current:\ncopy_construct %zu\ncopy_assign %zu\n" \
+      "move_construct %zu\nmove_assign %zu\n",          \
+      s.copy_construct, s.copy_assign, s.move_construct, s.move_assign);
 
 #define println(s) printf(s "\n")
 
-#define SETUP()  FDCache<S> fdc; S s; int fd = 3
-
+#define SETUP()   \
+  FDCache<S> fdc; \
+  S s;            \
+  int fd = 3
 
 using fdcap::FDCap;
 
-TEST(FDCache, InsertInvariants1)
-{
+TEST(FDCache, InsertInvariants1) {
   SETUP();
-  
+
   println("Insert Key by copy");
   bool b = fdc.insert(s, FDCap(dup3(0, fd++, 0)));
   EXPECT_TRUE(b);
@@ -65,8 +84,7 @@ TEST(FDCache, InsertInvariants1)
   ASSERT_TRUE(s2.move_construct > 0);
 }
 
-TEST(FDCache, ReplaceInvariants1)
-{
+TEST(FDCache, ReplaceInvariants1) {
   SETUP();
 
   bool b = fdc.insert(s, FDCap(dup3(0, fd++, 0)));
@@ -81,8 +99,7 @@ TEST(FDCache, ReplaceInvariants1)
   ASSERT_FALSE(fdc.replace(S{}, FDCap(dup3(0, fd++, 0))));
 }
 
-TEST(FDCache, RevokeInvariants1)
-{
+TEST(FDCache, RevokeInvariants1) {
   SETUP();
 
   bool b = fdc.insert(s, FDCap(dup3(0, fd++, 0)));
@@ -92,8 +109,7 @@ TEST(FDCache, RevokeInvariants1)
   ASSERT_EQ(fdc.get(s), nullptr);
 }
 
-TEST(FDCache, HetKeyInvariants1)
-{
+TEST(FDCache, HetKeyInvariants1) {
   FDCache<std::string_view> fdc;
   int fd = 3;
 
@@ -110,8 +126,7 @@ TEST(FDCache, HetKeyInvariants1)
   ASSERT_TRUE(b);
 }
 
-int main()
-{
+int main() {
   testing::InitGoogleTest();
   return RUN_ALL_TESTS();
 }
