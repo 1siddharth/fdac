@@ -16,14 +16,12 @@ restricting the process to a capability based sandbox (unlike prior art like Cap
 showcases how one can use file descriptors and other kernel primitives to build such a security
 model in userspace. Hence, it coexists with the conventional ambient authority system in Linux, and
 can also coexist with capability models like Capsicum if ever added to Linux in the future. It would
-possible to emulate a capability mode using seccomp, however. [Include later]
+possible to emulate a capability mode using seccomp, however.
 
 This also allows userspace to build APIs (e.g. over D-Bus, JSON over Unix Domain sockets, etc.)
 around the notion of a concrete handle type already supported by the kernel system call APIs, a
-pattern which is gaining more and more prevalence in the recent years. [Add ref to the new mount
-API, pidfd, etc.]
-
-(Contrast with capsicum and composability if such a model is added to the kernel in the future).
+pattern which is gaining more and more prevalence in the recent years (the new mount
+API, pidfd, etc.).
 
 Transitivity through the usual Unix model of file descriptor inheritance and SCM_RIGHTS transfer
 over UDS work as usual, and this is something system programmers are already familiar with. We use
@@ -44,5 +42,10 @@ interested in feedback around the problems associated with our current approach.
 excellent existing alternatives, but our idea was to exhibit how file descriptors can be used for
 the same purpose in existing setups, and some variants of this idea have nevertheless been explored
 in the past, but never materialized to some concrete solution. We however failed to find anything
-concrete in literature that explores using file descriptors in this manner. [Add ref to /dev/bpf
-rights, ebiederm syscall using rights fd]
+concrete in literature that explores using file descriptors in this manner.
+
+Other references:
+
+[Andy Lutomirski's /dev/implicit_rights idea](https://lore.kernel.org/bpf/21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org)
+
+[Eric Biederman's fsyscall proposal](https://lkml.org/lkml/2015/9/8/681)
