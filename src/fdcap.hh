@@ -26,34 +26,32 @@ private:
   mutable dev_t dev = FDCAP_DEV_MAX;
   mutable ino_t ino = FDCAP_INO_MAX;
 
-  static void lazy_init(const FDCap& f)
+  static void lazy_init(const FDCap& f) noexcept
   {
     if (f.dev == FDCAP_DEV_MAX)
       lazy_init_dev_ino(f);
   }
-  static void lazy_init_dev_ino(const FDCap& f)
+  static void lazy_init_dev_ino(const FDCap& f) noexcept
   {
     assert(f.ino == FDCAP_INO_MAX);
     assert(f.fd > -1);
     struct stat st;
     int r = fstat(f.fd, &st);
-    if (r < 0)
-      throw std::runtime_error("Failed to fstat file descriptor");
-    f.dev = st.st_dev;
-    f.ino = st.st_ino;
+    f.dev = r < 0 ? FDCAP_DEV_MAX : st.st_dev;
+    f.ino = r < 0 ? FDCAP_INO_MAX : st.st_ino;
   }
-  void move_from(const FDCap& f)
+  void move_from(const FDCap& f) noexcept
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = fcntl(f.fd, F_DUPFD_CLOEXEC, 3);
-    if (fd < 0)
-      throw std::runtime_error("Failed to duplicate descriptor");
-    dev = f.dev;
-    ino = f.ino;
+    dev = fd < 0 ? FDCAP_DEV_MAX : f.dev;
+    ino = fd < 0 ? FDCAP_INO_MAX : f.ino;
   }
-  void move_from(FDCap&& f)
+  void move_from(FDCap&& f) noexcept
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = f.fd;
     dev = f.dev;
     ino = f.ino;
@@ -64,21 +62,21 @@ private:
 public:
   template <typename... List,
 	    typename = std::enable_if_t<std::conjunction_v<std::is_same<std::remove_cvref_t<List>, FDCap>...>>>
-  static void lazy_init(const FDCap& f, const List&... list)
+  static void lazy_init(const FDCap& f, const List&... list) noexcept
   {
     if (f.dev == FDCAP_DEV_MAX)
       lazy_init(f);
     if (sizeof...(list) > 0)
       lazy_init(list...);
   }
-  static bool is_same_file(const FDCap& a, const FDCap& b)
+  [[nodiscard]] static bool is_same_file(const FDCap& a, const FDCap& b) noexcept
   {
     if (a.fd < 0 || b.fd < 0)
       return false;
     pid_t pid = getpid();
-    return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.get(), b.get());
+    return !syscall(__NR_kcmp, pid, pid, KCMP_FILE, a.fd, b.fd);
   }
-  static bool is_same_file_object(const FDCap& a, const FDCap& b)
+  [[nodiscard]] static bool is_same_file_object(const FDCap& a, const FDCap& b) noexcept
   {
     lazy_init(a, b);
     if ((a.dev == b.dev) && (a.ino == b.ino))
@@ -91,39 +89,43 @@ public:
     if (fd < 0)
       throw std::runtime_error("Bad File Descriptor");
   }
-  FDCap(const FDCap& f)
+  FDCap(const FDCap& f) noexcept
   {
-    move_from(f);
+    if (this != &f)
+      move_from(f);
   }
-  FDCap& operator=(FDCap& f)
+  FDCap& operator=(const FDCap& f) noexcept
   {
-    move_from(f);
+    if (this != &f)
+      move_from(f);
     return *this;
   }
-  FDCap(FDCap&& f)
+  FDCap(FDCap&& f) noexcept
   {
     move_from(std::move(f));
   }
-  FDCap& operator=(FDCap&& f)
+  FDCap& operator=(FDCap&& f) noexcept
   {
     move_from(std::move(f));
     return *this;
   }
-  ~FDCap()
+  ~FDCap() noexcept
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
   }
-  bool operator==(const FDCap& f) const
+  bool operator==(const FDCap& f) const noexcept
   {
     return is_same_file(*this, f);
   }
-  int get() const
+  [[nodiscard]] int get() const noexcept
   {
     return fd;
   }
-  void reset(int fd_)
+  void reset(int fd_) noexcept
   {
-    close(fd);
+    if (fd >= 0)
+      close(fd);
     fd = fd_;
     dev = FDCAP_DEV_MAX;
     ino = FDCAP_INO_MAX;
